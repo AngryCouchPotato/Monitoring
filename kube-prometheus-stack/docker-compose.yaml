@@ -1,0 +1,106 @@
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    depends_on:
+      - postgres-exporter
+      - php-fpm-exporter
+      - apache-exporter
+      - blackbox-exporter
+    networks:
+      - monitoring
+        
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: wordpress
+      POSTGRES_PASSWORD: wordpress
+      POSTGRES_DB: wordpress
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+
+  wordpress:
+    image: wordpress:php8.2-fpm
+    container_name: wordpress
+#    ports:
+#      - "80:80"
+    environment:
+      WORDPRESS_DB_HOST: postgres
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - ./wordpress:/var/www/html
+      - ./php-fpm.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
+    depends_on:
+      - postgres
+    networks:
+      - monitoring
+  
+  apache:
+    image: httpd:2.4
+    container_name: apache
+    depends_on:
+      - wordpress
+    volumes:
+      - ./apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+      - ./wordpress:/usr/local/apache2/htdocs/
+    ports:
+      - "80:80"
+    networks:
+      - monitoring
+        
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://wordpress:wordpress@postgres:5432/wordpress?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+    networks:
+      - monitoring
+
+  php-fpm-exporter:
+    image: hipages/php-fpm_exporter
+    container_name: php-fpm-exporter
+    ports:
+      - "9253:9253"
+    environment:
+      - PHP_FPM_SCRAPE_URI=tcp://wordpress:9000/status
+    networks:
+      - monitoring
+        
+  apache-exporter:
+    image: lusotycoon/apache-exporter
+    container_name: apache-exporter
+    ports:
+      - "9117:9117"
+    environment:
+      - SCRAPE_URI=http://apache/server-status?auto
+    networks:
+      - monitoring
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter
+    container_name: blackbox-exporter
+    ports:
+      - "9115:9115"
+    networks:
+      - monitoring
+
+volumes:
+  pg_data:
+
+networks:
+  monitoring:
