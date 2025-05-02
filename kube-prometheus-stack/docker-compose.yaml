@@ -31,8 +31,6 @@ services:
   wordpress:
     image: wordpress:php8.2-fpm
     container_name: wordpress
-#    ports:
-#      - "80:80"
     environment:
       WORDPRESS_DB_HOST: postgres
       WORDPRESS_DB_USER: wordpress
@@ -96,6 +94,17 @@ services:
     container_name: blackbox-exporter
     ports:
       - "9115:9115"
+    networks:
+      - monitoring
+
+  victoria-metrics:
+    image: victoriametrics/victoria-metrics
+    container_name: victoria-metrics
+    command:
+      - '--retentionPeriod=2w'
+      - '--httpListenAddr=:8428'
+    ports:
+      - "8428:8428"
     networks:
       - monitoring
 
