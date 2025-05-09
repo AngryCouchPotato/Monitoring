@@ -4,6 +4,7 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules:/etc/prometheus/rules
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
@@ -107,6 +108,20 @@ services:
       - "8428:8428"
     networks:
       - monitoring
+
+#  alertmanager:
+#    image: prom/alertmanager
+#    container_name: alertmanager
+#    hostname: alertmanager
+#    restart: always
+#    ports:
+#      - "9093:9093"
+#    volumes:
+#      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+#    command:
+#      - '--config.file=/etc/alertmanager/alertmanager.yml'
+#    networks:
+#      - monitoring
 
 volumes:
   pg_data:
