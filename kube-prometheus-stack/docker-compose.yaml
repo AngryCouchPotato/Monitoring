@@ -109,6 +109,20 @@ services:
     networks:
       - monitoring
 
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - monitoring
+
 #  alertmanager:
 #    image: prom/alertmanager
 #    container_name: alertmanager
@@ -125,6 +139,7 @@ services:
 
 volumes:
   pg_data:
+  grafana-storage:
 
 networks:
   monitoring:
